@@ -9,6 +9,7 @@
 #include <iostream>
 #include <climits>
 #include <unordered_set>
+#include <queue>
 #include <vector>
 #include <algorithm>
 #include <map>
@@ -25,6 +26,13 @@ struct Conexion {
     int costo;
 };
 
+void printVecOfInt(vector<int> &vec) {
+    for(int i = 0; i < vec.size(); i++) {
+        cout << vec[i] << " ";
+    }
+    cout << endl;
+}
+
 void printVecOfVecOfInt(vector<vector<int>> &vec) {
     for(int i = 0; i < vec.size(); i++) {
         for(int j = 0; j < vec.size(); j++) {
@@ -32,6 +40,20 @@ void printVecOfVecOfInt(vector<vector<int>> &vec) {
         }
         cout << endl;
     }
+}
+
+void printVecOfBool(vector<bool> &vec) {
+    for(int i = 0; i < vec.size(); i++) {
+        cout << vec[i] << " ";
+    }
+    cout << endl;
+}
+
+void printUnorderedSet(unordered_set<int> &set) {
+    for(int i : set) {
+        cout << i << " ";
+    }
+    cout << endl;
 }
 
 struct ConjuntoDisjunto {
@@ -73,6 +95,127 @@ vector<Conexion> encontrarMST(vector<Conexion> &conexiones, int n, ConjuntoDisju
 
     return mst;
 }
+
+
+struct tsp_node {
+    int level;
+    int acumCost;
+    int posCost;
+    int parent;
+    int actual;
+    vector<bool> visited;
+    vector<int> route;
+
+    bool operator<(const tsp_node &other) const { // for priority queue
+        return posCost >= other.posCost;
+    }
+};
+
+void calculatePossibleCost(tsp_node &n, vector<vector<int>> mat) {
+    n.posCost = n.acumCost;
+    int obtainedCost;
+
+    for (int i = 0; i < mat.size(); i++) { // for each node
+        obtainedCost = INT_MAX;
+        if (!n.visited[i] || i == n.actual) { // if node is not visited or is the actual node
+            if (!n.visited[i]) { // if node is not visited
+                for (int j = 0; j < mat.size(); j++) {
+                    if (mat[i][j] < obtainedCost && i != j) {
+                        obtainedCost = mat[i][j];
+                    }
+                }
+            }
+            if (obtainedCost != INT_MAX) { // if there is a possible cost
+                n.posCost += obtainedCost;
+            }
+        }
+    }
+}
+
+void showRoute(vector<int> &route, unordered_map<string, int> &neighborhoodsIndex) {
+    cout << endl;
+    string initialNeighborhood;
+    for(int i = 0; i < route.size(); i++) {
+        for(auto it = neighborhoodsIndex.begin(); it != neighborhoodsIndex.end(); it++) {
+            if(it->second == route[i]) {
+                cout << it->first << " - ";
+                if(i == 0) {
+                    initialNeighborhood = it->first;
+                }
+            }
+        }
+    }
+
+    cout << initialNeighborhood;
+
+
+    cout << endl;
+}
+
+void tsp(vector<vector<int>> &mat, int n, unordered_set<int> &centralNeighborhoods, unordered_map<string, int> &neighborhoodsIndex) {
+    // find initial neighborhood
+    int initialNeighborhood;
+    for (int i = 0; i < n; i++) {
+        if (centralNeighborhoods.find(i) == centralNeighborhoods.end()) {
+            initialNeighborhood = i;
+            break;
+        }
+    }
+
+    priority_queue<tsp_node> pq;
+    tsp_node initialNode;
+    initialNode.level = 0;
+    initialNode.parent = -1;
+    initialNode.actual = initialNeighborhood;
+    initialNode.visited.resize(n, false);
+    initialNode.visited[initialNeighborhood] = true;
+    initialNode.route.push_back(initialNeighborhood);
+    initialNode.acumCost = 0;
+    calculatePossibleCost(initialNode, mat);
+    pq.push(initialNode);
+
+
+    int optCost = INT_MAX;
+    vector<int> optRoute;
+    while(!pq.empty()) {
+        tsp_node actual = pq.top();
+        pq.pop();
+
+
+        if(actual.posCost > optCost) {
+            continue;
+        } else if(actual.level == n-1) {
+            if(mat[actual.actual][initialNeighborhood] != INT_MAX) {
+                optCost = min(optCost, actual.acumCost + mat[actual.actual][initialNeighborhood]);
+                optRoute = actual.route;
+            }
+            continue;
+        } else {
+            for(int i = 0; i < n; i++) {
+                if(mat[actual.actual][i] != INT_MAX && !actual.visited[i]) {
+                    tsp_node child;
+                    child.level = actual.level + 1;
+                    child.parent = actual.actual;
+                    child.actual = i;
+                    child.visited = actual.visited;
+                    child.visited[i] = true;
+                    child.route = actual.route;
+                    child.route.push_back(i);
+                    child.acumCost = actual.acumCost + mat[actual.actual][i];
+                    calculatePossibleCost(child, mat);
+                    pq.push(child);
+                }
+            }
+        }
+    }
+
+
+    showRoute(optRoute, neighborhoodsIndex);
+    cout << "Costo óptimo: " << optCost << endl;
+
+}
+
+
 
 int main() {
     // n = number of neighborhoods
@@ -129,6 +272,13 @@ int main() {
 
     cout << "Costo Total: " << costoTotal << endl;
     cout << "-------------------" << endl;
+
+
+
+    // 2. TSP
+    cout << "2 – La ruta óptima." << endl;
+    tsp(matAdj, n, centralNeighborhoods, neighborhoodsIndex);
+
 
     return 0;
 }
