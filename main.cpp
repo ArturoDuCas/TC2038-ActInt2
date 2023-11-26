@@ -13,6 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -341,6 +342,30 @@ int main() {
     cout << "2 – La ruta óptima." << endl;
     tsp(matAdj, n, centralNeighborhoodsSet, neighborhoodsDict, fwPath);
 
+    // Read new colonies
+    vector<Colonia> nuevasColonias(q);
+    for (int i = 0; i < q; ++i) {
+        cin >> nuevasColonias[i].name >> nuevasColonias[i].x >> nuevasColonias[i].y;
+    }
 
+    cout << "-------------------" << endl;
+    cout << "4 – Conexión de nuevas colonias." << endl;
+
+    for (int i = 0; i < q; ++i) {
+        int minDist = INT_MAX;
+        string coloniaExistente;
+
+        // Find the closest existing colony for each new colony
+        for (const Colonia &colonia : colonias) {
+            int dist = abs(colonia.x - nuevasColonias[i].x) + abs(colonia.y - nuevasColonias[i].y);
+            if (dist < minDist) {
+                minDist = dist;
+                coloniaExistente = colonia.name;
+            }
+        }
+
+        cout << nuevasColonias[i].name << " debe conectarse con " << coloniaExistente << endl;
+    }
+    
     return 0;
 }
