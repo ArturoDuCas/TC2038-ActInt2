@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <climits>
+#include <unordered_set>
 #include <vector>
 #include <algorithm>
 #include <map>
@@ -84,8 +85,9 @@ int main() {
     vector<Colonia> colonias(n);
     vector<Conexion> conexiones(m);
     // TODO: verify if they are always int values
-    vector<vector<int>> matAdj(n, vector<int>(n, INT_MAX)); // for tsp
+    vector<vector<int>> matAdj(n, vector<int>(n, INT_MAX));
     unordered_map<string, int> neighborhoodsIndex;
+    unordered_set<int> centralNeighborhoods;
 
 
     ConjuntoDisjunto conjDisjunto;
@@ -94,8 +96,14 @@ int main() {
     for (int i = 0; i < n; ++i) {
         cin >> colonias[i].name >> colonias[i].x >> colonias[i].y >> colonias[i].isCentral;
         neighborhoodsIndex[colonias[i].name] = i;
+
         // Assign index to colony names
         conjDisjunto.indiceColonias[colonias[i].name] = colonias[i].name;
+
+        // Add central neighborhoods to set
+        if (colonias[i].isCentral) {
+            centralNeighborhoods.insert(i);
+        }
     }
 
     // Read connections
