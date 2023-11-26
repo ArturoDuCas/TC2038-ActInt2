@@ -26,6 +26,40 @@ struct Conexion {
     int costo;
 };
 
+struct ConjuntoDisjunto {
+    map<string, string> indiceColonias;
+
+    string encontrar(string u) {
+        if (indiceColonias[u] != u) {
+            indiceColonias[u] = encontrar(indiceColonias[u]);
+        }
+        return indiceColonias[u];
+    }
+
+    void unir(string u, string v) {
+        string pu = encontrar(u);
+        string pv = encontrar(v);
+
+        indiceColonias[pu] = pv;
+    }
+};
+
+struct tsp_node {
+    int level;
+    int acumCost;
+    int posCost;
+    int parent;
+    int actual;
+    vector<bool> visited;
+    vector<int> route;
+
+    bool operator<(const tsp_node &other) const { // for priority queue
+        return posCost >= other.posCost;
+    }
+};
+
+
+// Print functions
 void printVecOfInt(vector<int> &vec) {
     for(int i = 0; i < vec.size(); i++) {
         cout << vec[i] << " ";
@@ -56,27 +90,21 @@ void printUnorderedSet(unordered_set<int> &set) {
     cout << endl;
 }
 
-struct ConjuntoDisjunto {
-    map<string, string> indiceColonias;
-
-    string encontrar(string u) {
-        if (indiceColonias[u] != u) {
-            indiceColonias[u] = encontrar(indiceColonias[u]);
-        }
-        return indiceColonias[u];
+void printUnorderedMap(unordered_map<int, int> &map) {
+    for(auto it = map.begin(); it != map.end(); it++) {
+        cout << it->first << " " << it->second << endl;
     }
+}
 
-    void unir(string u, string v) {
-        string pu = encontrar(u);
-        string pv = encontrar(v);
-
-        indiceColonias[pu] = pv;
-    }
-};
+// Helper functions
+bool isCentralNeighborhood(unordered_set<int> &centralNeighborhoodsSet, int i) {
+    return centralNeighborhoodsSet.find(i) != centralNeighborhoodsSet.end();
+}
 
 bool compararConexiones(const Conexion &a, const Conexion &b) {
     return a.costo < b.costo;
 }
+
 
 vector<Conexion> encontrarMST(vector<Conexion> &conexiones, int n, ConjuntoDisjunto &conjDisjunto) {
     sort(conexiones.begin(), conexiones.end(), compararConexiones);
@@ -97,19 +125,6 @@ vector<Conexion> encontrarMST(vector<Conexion> &conexiones, int n, ConjuntoDisju
 }
 
 
-struct tsp_node {
-    int level;
-    int acumCost;
-    int posCost;
-    int parent;
-    int actual;
-    vector<bool> visited;
-    vector<int> route;
-
-    bool operator<(const tsp_node &other) const { // for priority queue
-        return posCost >= other.posCost;
-    }
-};
 
 void calculatePossibleCost(tsp_node &n, vector<vector<int>> mat) {
     n.posCost = n.acumCost;
@@ -132,48 +147,90 @@ void calculatePossibleCost(tsp_node &n, vector<vector<int>> mat) {
     }
 }
 
-void showRoute(vector<int> &route, unordered_map<string, int> &neighborhoodsIndex) {
+string showNeighborhoodName(unordered_map<string, int> &neighborhoodsDict, int i) {
+    for(auto it = neighborhoodsDict.begin(); it != neighborhoodsDict.end(); it++) {
+        if(it->second == i) {
+            return it->first;
+        }
+    }
+
+    return "";
+}
+
+void showRouteHelper(vector<vector<int>> &fwPath, int x, int y, unordered_map<string, int> &neighborhoodsDict) {
+    if (fwPath[x][y] == -1) {
+        cout << " - " << showNeighborhoodName(neighborhoodsDict, y);
+        return;
+    }
+    showRouteHelper(fwPath, x, fwPath[x][y], neighborhoodsDict);
+    showRouteHelper(fwPath, fwPath[x][y], y, neighborhoodsDict);
+}
+
+
+void showRoute(vector<int> &route, unordered_map<string, int> &neighborhoodsDict, vector<vector<int>> &fwPath, unordered_map<int, int> &originalIndex) {
     cout << endl;
-    string initialNeighborhood;
+
+    cout << showNeighborhoodName(neighborhoodsDict, originalIndex[route[0]]);
     for(int i = 0; i < route.size(); i++) {
-        for(auto it = neighborhoodsIndex.begin(); it != neighborhoodsIndex.end(); it++) {
-            if(it->second == route[i]) {
-                cout << it->first << " - ";
-                if(i == 0) {
-                    initialNeighborhood = it->first;
+        showRouteHelper(fwPath, originalIndex[route[i]], originalIndex[route[i+1]], neighborhoodsDict);
+    }
+
+    cout << endl << endl;
+}
+
+
+vector<vector<int>> floydWarshall(vector<vector<int>> mat, int n, vector<vector<int>> &fwPath) {
+    for(int k = 0; k <n; k++) {
+        for(int i = 0; i < n; i++) {
+            for(int j = 0; j < n; j++) {
+                if(mat[i][k] != INT_MAX && mat[k][j] != INT_MAX &&
+                   mat[i][k]+mat[k][j] < mat[i][j]) {
+                    mat[i][j] = mat[i][k]+mat[k][j];
+                    fwPath[i][j] = k;
                 }
             }
         }
     }
 
-    cout << initialNeighborhood;
-
-
-    cout << endl;
+    return mat;
 }
 
-void tsp(vector<vector<int>> &mat, int n, unordered_set<int> &centralNeighborhoods, unordered_map<string, int> &neighborhoodsIndex) {
-    // find initial neighborhood
-    int initialNeighborhood;
+vector<vector<int>> createNonCentralMat(vector<vector<int>> mat, int n, unordered_set<int> &centralNeighborhoodsSet, unordered_map<int, int> &originalIndex) {
+    vector<vector<int>> nonCentralMat;
+
     for (int i = 0; i < n; i++) {
-        if (centralNeighborhoods.find(i) == centralNeighborhoods.end()) {
-            initialNeighborhood = i;
-            break;
+        if (!isCentralNeighborhood(centralNeighborhoodsSet, i)) {
+            vector<int> row;
+            for (int j = 0; j < n; j++) {
+                if (!isCentralNeighborhood(centralNeighborhoodsSet, j)) {
+                    row.push_back(mat[i][j]);
+                }
+            }
+            originalIndex[nonCentralMat.size()] = i;
+            nonCentralMat.push_back(row);
         }
     }
+
+    return nonCentralMat;
+}
+
+void tsp(vector<vector<int>> &mat, int n, unordered_set<int> &centralNeighborhoodsSet, unordered_map<string, int> &neighborhoodsDict, vector<vector<int>> &fwPath) {
+    vector<vector<int>> fwMat =  floydWarshall(mat, n, fwPath);
+    unordered_map<int, int> originalIndex; // index of non-central neighborhoods in original matrix
+    vector<vector<int>> nonCentralMat = createNonCentralMat(fwMat, n, centralNeighborhoodsSet, originalIndex);
+    n = nonCentralMat.size();
 
     priority_queue<tsp_node> pq;
     tsp_node initialNode;
     initialNode.level = 0;
     initialNode.parent = -1;
-    initialNode.actual = initialNeighborhood;
+    initialNode.actual = 0;
     initialNode.visited.resize(n, false);
-    initialNode.visited[initialNeighborhood] = true;
-    initialNode.route.push_back(initialNeighborhood);
+    initialNode.visited[0] = true;
+    initialNode.route.push_back(0);
     initialNode.acumCost = 0;
-    calculatePossibleCost(initialNode, mat);
+    calculatePossibleCost(initialNode, nonCentralMat);
     pq.push(initialNode);
-
 
     int optCost = INT_MAX;
     vector<int> optRoute;
@@ -181,18 +238,17 @@ void tsp(vector<vector<int>> &mat, int n, unordered_set<int> &centralNeighborhoo
         tsp_node actual = pq.top();
         pq.pop();
 
-
         if(actual.posCost > optCost) {
             continue;
         } else if(actual.level == n-1) {
-            if(mat[actual.actual][initialNeighborhood] != INT_MAX) {
-                optCost = min(optCost, actual.acumCost + mat[actual.actual][initialNeighborhood]);
+            if(nonCentralMat[actual.actual][0] != INT_MAX) {
+                optCost = min(optCost, actual.acumCost + nonCentralMat[actual.actual][0]);
                 optRoute = actual.route;
             }
             continue;
         } else {
             for(int i = 0; i < n; i++) {
-                if(mat[actual.actual][i] != INT_MAX && !actual.visited[i]) {
+                if(nonCentralMat[actual.actual][i] != INT_MAX && !actual.visited[i]) {
                     tsp_node child;
                     child.level = actual.level + 1;
                     child.parent = actual.actual;
@@ -201,17 +257,16 @@ void tsp(vector<vector<int>> &mat, int n, unordered_set<int> &centralNeighborhoo
                     child.visited[i] = true;
                     child.route = actual.route;
                     child.route.push_back(i);
-                    child.acumCost = actual.acumCost + mat[actual.actual][i];
-                    calculatePossibleCost(child, mat);
+                    child.acumCost = actual.acumCost + nonCentralMat[actual.actual][i];
+                    calculatePossibleCost(child, nonCentralMat);
                     pq.push(child);
                 }
             }
         }
     }
 
-
-    showRoute(optRoute, neighborhoodsIndex);
-    cout << "Costo óptimo: " << optCost << endl;
+    showRoute(optRoute, neighborhoodsDict, fwPath, originalIndex);
+    cout << "La Ruta Óptima tiene un costo total de: " << optCost << endl;
 
 }
 
@@ -227,10 +282,10 @@ int main() {
 
     vector<Colonia> colonias(n);
     vector<Conexion> conexiones(m);
-    // TODO: verify if they are always int values
     vector<vector<int>> matAdj(n, vector<int>(n, INT_MAX));
-    unordered_map<string, int> neighborhoodsIndex;
-    unordered_set<int> centralNeighborhoods;
+    vector<vector<int>> fwPath(n, vector<int>(n)); // -1 means direct connection
+    unordered_map<string, int> neighborhoodsDict;
+    unordered_set<int> centralNeighborhoodsSet;
 
 
     ConjuntoDisjunto conjDisjunto;
@@ -238,15 +293,18 @@ int main() {
     // Read neighborhoods
     for (int i = 0; i < n; ++i) {
         cin >> colonias[i].name >> colonias[i].x >> colonias[i].y >> colonias[i].isCentral;
-        neighborhoodsIndex[colonias[i].name] = i;
+        neighborhoodsDict[colonias[i].name] = i;
 
         // Assign index to colony names
         conjDisjunto.indiceColonias[colonias[i].name] = colonias[i].name;
 
         // Add central neighborhoods to set
         if (colonias[i].isCentral) {
-            centralNeighborhoods.insert(i);
+            centralNeighborhoodsSet.insert(i);
         }
+
+        // Add direct connections to path matrix
+        fwPath[i][i] = -1;
     }
 
     // Read connections
@@ -254,10 +312,14 @@ int main() {
         cin >> conexiones[i].colonia1 >> conexiones[i].colonia2 >> conexiones[i].costo;
 
         // Add edge to adjacency matrix
-        int u = neighborhoodsIndex[conexiones[i].colonia1];
-        int v = neighborhoodsIndex[conexiones[i].colonia2];
+        int u = neighborhoodsDict[conexiones[i].colonia1];
+        int v = neighborhoodsDict[conexiones[i].colonia2];
         matAdj[u][v] = matAdj[v][u] = conexiones[i].costo;
+
+        // Add edge to path matrix
+        fwPath[u][v] = fwPath[v][u] = -1;
     }
+
 
     vector<Conexion> mst = encontrarMST(conexiones, n, conjDisjunto);
 
@@ -275,9 +337,9 @@ int main() {
 
 
 
-    // 2. TSP
+    // 2. FLoyd-Warshall + TSP
     cout << "2 – La ruta óptima." << endl;
-    tsp(matAdj, n, centralNeighborhoods, neighborhoodsIndex);
+    tsp(matAdj, n, centralNeighborhoodsSet, neighborhoodsDict, fwPath);
 
 
     return 0;
