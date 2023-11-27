@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <map>
 #include <unordered_map>
+#include <cmath>
+#include <cfloat>
 
 using namespace std;
 
@@ -59,6 +61,9 @@ struct tsp_node {
     }
 };
 
+double dist(const Colonia &b1, const Colonia &b2) {
+    return sqrt((b1.x - b2.x) * (b1.x - b2.x) + (b1.y - b2.y) * (b1.y - b2.y));
+}
 
 // Print functions
 void printVecOfInt(vector<int> &vec) {
@@ -329,6 +334,10 @@ int main() {
         fwPath[u][v] = fwPath[v][u] = -1;
     }
 
+    vector<Conexion> nuevaConexion(k);
+    for(int i = 0; i < k; i++) {
+      cin >> nuevaConexion[i].colonia1 >> nuevaConexion[i].colonia2;
+    }
 
     vector<Conexion> mst = encontrarMST(conexiones, n, conjDisjunto);
 
@@ -385,11 +394,10 @@ int main() {
 
         // Find the closest existing colony for each new colony
         for (const Colonia &colonia : colonias) {
-            int dist = abs(colonia.x - nuevasColonias[i].x) + abs(colonia.y - nuevasColonias[i].y);
-            if (dist < minDist) {
-                minDist = dist;
+            double distance = dist(colonia, nuevasColonias[i]);
+            if (distance < minDist) {
+                minDist = distance;
                 coloniaExistente = colonia.name;
-            }
         }
 
         cout << nuevasColonias[i].name << " debe conectarse con " << coloniaExistente << endl;
