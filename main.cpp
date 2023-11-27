@@ -27,6 +27,7 @@ struct Colonia {
 struct Conexion {
     string colonia1, colonia2;
     int costo;
+    bool isNew = false;
 };
 
 struct ConjuntoDisjunto {
@@ -114,7 +115,6 @@ bool compararConexiones(const Conexion &a, const Conexion &b) {
 
 vector<Conexion> encontrarMST(vector<Conexion> &conexiones, int n, ConjuntoDisjunto &conjDisjunto) {
     sort(conexiones.begin(), conexiones.end(), compararConexiones);
-
     vector<Conexion> mst;
 
     for (const Conexion &conexion : conexiones) {
@@ -334,27 +334,35 @@ int main() {
         fwPath[u][v] = fwPath[v][u] = -1;
     }
 
-    // Read new connections
-    vector<Conexion> nuevaConexion(k);
+    // Read connections with new cable
     for (int i = 0; i < k; i++) {
-        cin >> nuevaConexion[i].colonia1 >> nuevaConexion[i].colonia2;
-    }
+        string c1, c2;
+        cin >> c1 >> c2;
 
-    conexiones.insert(conexiones.end(), nuevaConexion.begin(), nuevaConexion.end());
-    vector<Conexion> mst = encontrarMST(conexiones, n, conjDisjunto);
-
-    cout << "-------------------" << endl;
-    cout << "1 - Cableado óptimo de nueva conexión." << endl;
-
-    int costoTotal = 0;
-    for (const Conexion &conexion : mst) {
-        if (conexion.costo > 0) {  // Check if the connection has a positive cost
-            cout << conexion.colonia1 << " - " << conexion.colonia2 << " " << conexion.costo << endl;
-            costoTotal += conexion.costo;
+        for(int j = 0; j < conexiones.size(); j++) {
+            if((conexiones[j].colonia1 == c1 && conexiones[j].colonia2 == c2) || (conexiones[j].colonia1 == c2 && conexiones[j].colonia2 == c1)) {
+                cout << "Conexión entre " << c1 << " y " << c2 << " ya existe." << endl;
+                conexiones[j].isNew = true;
+                break;
+            }
         }
     }
 
-    cout << "Costo Total: " << costoTotal << endl;
+    vector<Conexion> mst = encontrarMST(conexiones, n, conjDisjunto);
+
+    cout << "-------------------" << endl;
+    cout << "1 - Cableado óptimo de nueva conexión." << endl << endl;
+
+    int costoTotal = 0;
+    for(int i = 0; i < mst.size(); i++) {
+        Conexion c = mst[i];
+        if (c.costo > 0 && !c.isNew) {
+            cout << c.colonia1 << " - " << c.colonia2 << " " << c.costo << endl;
+            costoTotal += c.costo;
+        }
+    }
+
+    cout << endl << "Costo Total: " << costoTotal << endl;
     cout << "-------------------" << endl;
 
 

@@ -12,6 +12,6 @@ Purisima AltaVista 80
 Tecnologico Roma 55
 Tecnologico AltaVista 15
 Roma AltaVista 18
-Purísima Tecnologico
+Purisima Tecnologico
 Independencia 180 -15
 Roble 45 68
