@@ -351,6 +351,25 @@ int main() {
     tsp(matAdj, n, centralNeighborhoodsSet, neighborhoodsDict, fwPath);
     cout << "-------------------" << endl;
 
+   // 3. Most optimal path between centrals
+    cout << "3 – Caminos más cortos entre centrales." << endl;
+
+    vector<vector<int>> fwCentralPath = floydWarshall(matAdj, n, fwPath);
+
+    for (int i = 0; i < n; ++i) {
+        if (colonias[i].isCentral) {
+            for (int j = i + 1; j < n; ++j) {
+                if (colonias[j].isCentral) {
+                    cout << showNeighborhoodName(neighborhoodsDict, i);
+                    showRouteHelper(fwPath, i, j, neighborhoodsDict);
+                    cout << " (" << fwCentralPath[i][j] << ")" << endl;
+                }
+            }
+        }
+    }
+
+    cout << "-------------------" << endl;
+    
     // Read new colonies
     vector<Colonia> nuevasColonias(q);
     for (int i = 0; i < q; ++i) {
@@ -375,6 +394,6 @@ int main() {
 
         cout << nuevasColonias[i].name << " debe conectarse con " << coloniaExistente << endl;
     }
-    
+
     return 0;
 }
