@@ -398,6 +398,7 @@ int main() {
             if (distance < minDist) {
                 minDist = distance;
                 coloniaExistente = colonia.name;
+            }
         }
 
         cout << nuevasColonias[i].name << " debe conectarse con " << coloniaExistente << endl;
