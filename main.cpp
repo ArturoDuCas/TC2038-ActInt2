@@ -483,7 +483,6 @@ int main() {
 
         for(int j = 0; j < conexiones.size(); j++) {
             if((conexiones[j].colonia1 == c1 && conexiones[j].colonia2 == c2) || (conexiones[j].colonia1 == c2 && conexiones[j].colonia2 == c1)) {
-                cout << "Conexión entre " << c1 << " y " << c2 << " ya existe." << endl;
                 conexiones[j].isNew = true;
                 break;
             }
@@ -556,6 +555,8 @@ int main() {
 
         cout << nuevasColonias[i].name << " debe conectarse con " << coloniaExistente << endl;
     }
+
+    cout << "-------------------" << endl;
 
     return 0;
 }
