@@ -62,6 +62,24 @@ struct tsp_node {
     }
 };
 
+/**
+ * @title Euclidean Distance Calculator
+ *
+ * @description
+ * Calculates the Euclidean distance between two neighborhoods represented by their coordinates.
+ *
+ * @param b1 : const Colonia&
+ *        The first neighborhood, represented by a struct with name, x-coordinate, y-coordinate, and centrality indicator.
+ *
+ * @param b2 : const Colonia&
+ *        The second neighborhood, represented by a struct with name, x-coordinate, y-coordinate, and centrality indicator.
+ *
+ * @return double
+ *         Returns the Euclidean distance between the two neighborhoods.
+ *
+ * @complexity O(1)
+ *         The function has constant time complexity as it involves simple arithmetic operations.
+ */
 double dist(const Colonia &b1, const Colonia &b2) {
     return sqrt((b1.x - b2.x) * (b1.x - b2.x) + (b1.y - b2.y) * (b1.y - b2.y));
 }
@@ -113,6 +131,30 @@ bool compararConexiones(const Conexion &a, const Conexion &b) {
 }
 
 
+/**
+ * @title Minimum Spanning Tree (MST) Finder
+ *
+ * @description
+ * Finds the Minimum Spanning Tree (MST) for a given set of connections using Kruskal's algorithm.
+ * The function sorts the connections based on their costs and selects edges in ascending order while
+ * avoiding cycles to construct the MST.
+ *
+ * @param conexiones : vector<Conexion>&
+ *        The vector of connections, each represented by the source, destination, and cost.
+ *
+ * @param n : int
+ *        The total number of neighborhoods in the graph.
+ *
+ * @param conjDisjunto : ConjuntoDisjunto&
+ *        The disjoint-set data structure to keep track of connected components and avoid cycles.
+ *
+ * @return vector<Conexion>
+ *         Returns the Minimum Spanning Tree (MST) as a vector of connections.
+ *
+ * @complexity O(E * log(E) + α(N))
+ *         E is the number of edges (connections), log(E) is the complexity of the sort operation,
+ *         and α(N) is the amortized complexity of the disjoint-set union and find operations.
+ */
 vector<Conexion> encontrarMST(vector<Conexion> &conexiones, int n, ConjuntoDisjunto &conjDisjunto) {
     sort(conexiones.begin(), conexiones.end(), compararConexiones);
     vector<Conexion> mst;
