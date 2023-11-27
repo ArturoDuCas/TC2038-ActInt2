@@ -3,7 +3,7 @@ Fecha: 26 de noviembre 2023
 
 
 Arturo Durán Castillo - A00833516
-    -> Desarrollo del punto numero 2
+    -> Desarrollo del punto numero 1, 2
 
 Andrés Marcelo De Luna Pámanes - A00832239
     -> Desarrollo del punto numero 1, 3 y 4
