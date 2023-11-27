@@ -334,11 +334,13 @@ int main() {
         fwPath[u][v] = fwPath[v][u] = -1;
     }
 
+    // Read new connections
     vector<Conexion> nuevaConexion(k);
-    for(int i = 0; i < k; i++) {
-      cin >> nuevaConexion[i].colonia1 >> nuevaConexion[i].colonia2;
+    for (int i = 0; i < k; i++) {
+        cin >> nuevaConexion[i].colonia1 >> nuevaConexion[i].colonia2;
     }
 
+    conexiones.insert(conexiones.end(), nuevaConexion.begin(), nuevaConexion.end());
     vector<Conexion> mst = encontrarMST(conexiones, n, conjDisjunto);
 
     cout << "-------------------" << endl;
@@ -346,8 +348,10 @@ int main() {
 
     int costoTotal = 0;
     for (const Conexion &conexion : mst) {
-        cout << conexion.colonia1 << " - " << conexion.colonia2 << " " << conexion.costo << endl;
-        costoTotal += conexion.costo;
+        if (conexion.costo > 0) {  // Check if the connection has a positive cost
+            cout << conexion.colonia1 << " - " << conexion.colonia2 << " " << conexion.costo << endl;
+            costoTotal += conexion.costo;
+        }
     }
 
     cout << "Costo Total: " << costoTotal << endl;
