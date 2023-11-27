@@ -165,6 +165,7 @@ void showRouteHelper(vector<vector<int>> &fwPath, int x, int y, unordered_map<st
     }
     showRouteHelper(fwPath, x, fwPath[x][y], neighborhoodsDict);
     showRouteHelper(fwPath, fwPath[x][y], y, neighborhoodsDict);
+
 }
 
 
@@ -172,7 +173,7 @@ void showRoute(vector<int> &route, unordered_map<string, int> &neighborhoodsDict
     cout << endl;
 
     cout << showNeighborhoodName(neighborhoodsDict, originalIndex[route[0]]);
-    for(int i = 0; i < route.size(); i++) {
+    for(int i = 0; i < route.size() - 1; i++) {
         showRouteHelper(fwPath, originalIndex[route[i]], originalIndex[route[i+1]], neighborhoodsDict);
     }
 
@@ -182,6 +183,7 @@ void showRoute(vector<int> &route, unordered_map<string, int> &neighborhoodsDict
 
 vector<vector<int>> floydWarshall(vector<vector<int>> mat, int n, vector<vector<int>> &fwPath) {
     for(int k = 0; k <n; k++) {
+        mat[k][k] = 0;
         for(int i = 0; i < n; i++) {
             for(int j = 0; j < n; j++) {
                 if(mat[i][k] != INT_MAX && mat[k][j] != INT_MAX &&
@@ -209,6 +211,8 @@ vector<vector<int>> createNonCentralMat(vector<vector<int>> mat, int n, unordere
             }
             originalIndex[nonCentralMat.size()] = i;
             nonCentralMat.push_back(row);
+            nonCentralMat[nonCentralMat.size()-1][nonCentralMat.size()-1] = INT_MAX;
+
         }
     }
 
@@ -243,8 +247,11 @@ void tsp(vector<vector<int>> &mat, int n, unordered_set<int> &centralNeighborhoo
             continue;
         } else if(actual.level == n-1) {
             if(nonCentralMat[actual.actual][0] != INT_MAX) {
-                optCost = min(optCost, actual.acumCost + nonCentralMat[actual.actual][0]);
-                optRoute = actual.route;
+                if (actual.acumCost + nonCentralMat[actual.actual][0] < optCost) {
+                    optCost = actual.acumCost + nonCentralMat[actual.actual][0];
+                    optRoute = actual.route;
+                    optRoute.push_back(0);
+                }
             }
             continue;
         } else {
@@ -265,6 +272,7 @@ void tsp(vector<vector<int>> &mat, int n, unordered_set<int> &centralNeighborhoo
             }
         }
     }
+
 
     showRoute(optRoute, neighborhoodsDict, fwPath, originalIndex);
     cout << "La Ruta Óptima tiene un costo total de: " << optCost << endl;
@@ -341,6 +349,7 @@ int main() {
     // 2. FLoyd-Warshall + TSP
     cout << "2 – La ruta óptima." << endl;
     tsp(matAdj, n, centralNeighborhoodsSet, neighborhoodsDict, fwPath);
+    cout << "-------------------" << endl;
 
     // Read new colonies
     vector<Colonia> nuevasColonias(q);
@@ -348,7 +357,7 @@ int main() {
         cin >> nuevasColonias[i].name >> nuevasColonias[i].x >> nuevasColonias[i].y;
     }
 
-    cout << "-------------------" << endl;
+
     cout << "4 – Conexión de nuevas colonias." << endl;
 
     for (int i = 0; i < q; ++i) {
